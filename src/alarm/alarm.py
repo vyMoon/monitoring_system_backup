@@ -1,5 +1,6 @@
 import re
 from alarm_types import alarm_types
+from error_messages import alarm_error_messages as error_messages
 
 # Alarm
 # Innehåler imformation om  alarmet
@@ -34,10 +35,10 @@ class Alarm:
 
   def validateType(self, alarm_type):
     if type(alarm_type) != str:
-      raise ValueError('Alarm type must be a string')
+      raise ValueError(error_messages['type_type'])
     if alarm_type not in alarm_types:
       raise ValueError(
-        'Aalarm type must be "disc" "ram" or "cpu"'
+        error_messages['type_value']
       )
   
     return True
@@ -45,13 +46,13 @@ class Alarm:
   def validateTarget(self, target):
     self.validateTargetType(target)
     if 0 > target or target > 100:
-      raise ValueError('Target must be from 0 to 100')
+      raise ValueError(error_messages['target_value'])
     return True
 
   def validateTargetType(self, target):
     if type(target) is not int and type(target) is not float:
       raise ValueError(
-        'Target must be a integer or float'
+        error_messages['target_type']
       )
     return True
   
@@ -75,6 +76,6 @@ class Alarm:
       'target': int(target)
     }
 
-
-a = Alarm('Alarm - type: disc, target: 100')
-print(a)
+a = Alarm('cpu', 55)
+b = Alarm(f'{a}')
+print(b)
