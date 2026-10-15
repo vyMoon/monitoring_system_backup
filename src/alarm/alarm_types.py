@@ -1,1 +1,1 @@
-alarm_types = ('disc', 'ram', 'cpu')
+alarm_types = ('disk', 'ram', 'cpu')

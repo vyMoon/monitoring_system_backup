@@ -1,6 +1,6 @@
 import re
-from alarm_types import alarm_types
-from error_messages import alarm_error_messages as error_messages
+from .alarm_types import alarm_types
+from .error_messages import alarm_error_messages as error_messages
 
 # Alarm
 # Innehåler imformation om  alarmet
@@ -17,7 +17,7 @@ from error_messages import alarm_error_messages as error_messages
 
 class Alarm:
   name = 'Alarm'
-  pattern = r'^Alarm - type: (cpu|disc|ram), target: \d+$'
+  pattern = r'^Alarm - type: (cpu|disk|ram), target: \d+$'
 
   def __init__(self, alarm_type, target=None):
     if self.isParsAble(alarm_type):
@@ -38,7 +38,7 @@ class Alarm:
       raise ValueError(error_messages['type_type'])
     if alarm_type not in alarm_types:
       raise ValueError(
-        error_messages['type_value']
+        f'{error_messages['type_value']}, given value {alarm_type}'
       )
   
     return True
@@ -64,7 +64,7 @@ class Alarm:
     return bool(re.fullmatch(self.pattern, stringified_alarm))
 
   def parseAlarm(self, stringified_alarm):
-    match = re.search(r"type: *(cpu|disc|ram)", stringified_alarm)
+    match = re.search(r"type: *(cpu|disk|ram)", stringified_alarm)
     if match:
       alarmType = match.group(1)
     match = re.search(r"target: *(\d+)", stringified_alarm)
@@ -76,6 +76,6 @@ class Alarm:
       'target': int(target)
     }
 
-a = Alarm('cpu', 55)
-b = Alarm(f'{a}')
-print(b)
+# a = Alarm('cpu', 55)
+# b = Alarm(f'{a}')
+# print(b)
