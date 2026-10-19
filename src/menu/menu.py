@@ -79,13 +79,18 @@ class Menu(Tools):
     print('Existing alarms')
     self.printAlarms()
     print('What is next?')
-    self.printOptions(self.options)
-    maxIndex = self.getMaxIndex(self.options)
-    choice = self.requestNumberBetween(maxIndex)
+
+    choice = self.requestAnswer(self.options)
     chosenOption = self.options[str(choice)]
+
     if 'fn' in chosenOption and callable(chosenOption.get('fn')): 
       chosenOption['fn']()
     else: print('not ready yet')
+
+  def requestAnswer(self, options):
+    self.printOptions(options)
+    maxIndex = self.getMaxIndex(options)
+    return self.requestNumberBetween(maxIndex)
 
   def printOptions(self, options):
     for i, option in options.items():
@@ -131,11 +136,6 @@ class Menu(Tools):
     for alarm in self.alarms:
       if alarm.type == alarmType:
         return True
-
-  def requestAnswer(self, options):
-    self.printOptions(options)
-    maxIndex = self.getMaxIndex(options)
-    return self.requestNumberBetween(maxIndex)
 
   def printAvailableAlarmTypes(self):
     for i, type in enumerate(alarm_types):
