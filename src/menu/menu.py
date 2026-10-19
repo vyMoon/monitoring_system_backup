@@ -22,7 +22,8 @@ menu_messages = {
   },
   'alarm': {
     'start_create': 'what type of alarm would you like to create',
-    'existed': 'Alarm, {type} exists. Do you want to replace it?'
+    'existed': 'Alarm, {type} exists. Do you want to replace it?',
+    'edit': 'You are going to change alarm with type: {type}. Provide new alarm limit'
   }
 }
 
@@ -47,12 +48,43 @@ class Menu(Tools):
           'fn': self.createAlarms
         },
         '1': {
-          'text': 'Change existing alarm'
+          'text': 'Change existing alarm',
+          'fn': self.editAlarm
         },
         '2': {
-          'text': 'Start monitoring'
+          'text': 'Delete alarm',
+          'fn': self.deleteAlarm
+        },
+        '3': {
+          'text': 'Start monitoring',
+          'fn': self.monitorSystem
         }
       }
+
+  def monitorSystem():
+    print('monitoring')
+
+  def deleteAlarm():
+    print('delete')
+  
+  def editAlarm(self):
+    idx = self.requestAnswer(
+      self.getAlarmsAsOptions()
+    )
+    editedAlarm = self.alarms[idx]
+    print(menu_messages['alarm']['edit'].format(type=editedAlarm.type))
+    target = self.requestNumberBetween(100)
+    self.replaceAlarm(
+      Alarm(editedAlarm.type, target)
+    )
+
+  def getAlarmsAsOptions(self):
+    options = {}
+    for i, alarm in enumerate(self.alarms):
+      options[str(i)] = {
+        'text': str(alarm)
+      }
+    return options
 
   def checkAlarmsFile(self):
     if not self.alarms_file.exists():
