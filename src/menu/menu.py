@@ -3,18 +3,6 @@ from alarm.alarm import Alarm
 from alarm.alarm_types import alarm_types
 from tools.tools import Tools
 
-# Menu
-# startar alarm skapande dialog
-# options - add alarm, remove alarm, start monitor
-# m = Monitor(Alarm(type, target), Alarm(type, target), Alarm(type, target))
-# m.start(), m.stop()
-# Startar monitor -> m.start()
-# avslutar monitors arbete (ctrl c) -> m.stop()
-# try:
-#   m.start()
-# except KeyboardInteruption:
-#   m.stop() 
-# handlar errors ?
 menu_messages = {
   'menu': {
     'start': 'Welcome to our smal monitoring system',
@@ -23,7 +11,9 @@ menu_messages = {
   'alarm': {
     'start_create': 'what type of alarm would you like to create',
     'existed': 'Alarm, {type} exists. Do you want to replace it?',
-    'edit': 'You are going to change alarm with type: {type}. Provide new alarm limit'
+    'edit': 'You are going to change alarm with type: {type}. Provide new alarm limit',
+    'delete': 'Which alarm would you like to delete?',
+    'edit': 'Which alarm would you like to edit?',
   }
 }
 
@@ -61,15 +51,21 @@ class Menu(Tools):
         }
       }
 
-  def monitorSystem():
+  def monitorSystem(self):
     print('monitoring')
 
-  def deleteAlarm():
-    print('delete')
+  def deleteAlarm(self):
+    idx = self.requestAnswer(
+      self.getAlarmsAsOptions(),
+      menu_messages['alarm']['delete']
+    )
+
+    self.alarms.pop(idx)
   
   def editAlarm(self):
     idx = self.requestAnswer(
-      self.getAlarmsAsOptions()
+      self.getAlarmsAsOptions(),
+      menu_messages['alarm']['edit']
     )
     editedAlarm = self.alarms[idx]
     print(menu_messages['alarm']['edit'].format(type=editedAlarm.type))
@@ -98,7 +94,6 @@ class Menu(Tools):
 
   def start(self):
     print(menu_messages['menu']['start'])
-    self.printAlarms()
 
     while True:
       if not len(self.alarms):
@@ -108,18 +103,17 @@ class Menu(Tools):
         self.showOptions()
 
   def showOptions(self):
-    print('Existing alarms')
     self.printAlarms()
-    print('What is next?')
 
-    choice = self.requestAnswer(self.options)
+    choice = self.requestAnswer(self.options, 'What is next?')
     chosenOption = self.options[str(choice)]
 
     if 'fn' in chosenOption and callable(chosenOption.get('fn')): 
       chosenOption['fn']()
     else: print('not ready yet')
 
-  def requestAnswer(self, options):
+  def requestAnswer(self, options, message):
+    print(message)
     self.printOptions(options)
     maxIndex = self.getMaxIndex(options)
     return self.requestNumberBetween(maxIndex)
@@ -151,8 +145,10 @@ class Menu(Tools):
     target = self.requestNumberBetween(100)
 
     if self.isAlarmExist(type):
-      print(menu_messages['alarm']['existed'].format(type=type))
-      choice = self.requestAnswer(self.yesNoOptions)
+      choice = self.requestAnswer(
+        self.yesNoOptions,
+        menu_messages['alarm']['existed'].format(type=type)
+      )
       if choice:
         self.replaceAlarm(Alarm(type, target))
     else:
