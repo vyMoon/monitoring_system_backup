@@ -1,3 +1,1 @@
-Alarm - type: cpu, target: 50
-Alarm - type: ram, target: 50
-Alarm - type: disk, target: 50
+Alarm - type: cpu, target: 44

@@ -8,5 +8,4 @@ from menu import Menu
 
 
 m = Menu()
-
-m.check()
+m.start()
