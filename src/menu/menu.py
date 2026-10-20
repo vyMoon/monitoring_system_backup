@@ -52,40 +52,6 @@ class Menu(Tools):
         }
       }
 
-  def monitorSystem(self):
-    print('monitoring')
-
-  def deleteAlarm(self):
-    idx = self.requestAnswer(
-      self.alarmService.getAlarmsAsOptions(),
-      menu_messages['alarm']['delete']
-    )
-    self.alarmService.deleteAlarmByIndex(idx)
-  
-  def editAlarm(self):
-    idx = self.requestAnswer(
-      self.alarmService.getAlarmsAsOptions(),
-      menu_messages['alarm']['edit']
-    )
-    editedAlarm = self.alarmService.getAlarmByIndex(idx)
-    print(menu_messages['alarm']['edit_type'].format(type=editedAlarm.type))
-    target = self.requestNumberBetween(100)
-    self.alarmService.replaceAlarm(
-      Alarm(editedAlarm.type, target)
-    )
-
-  def checkAlarmsFile(self):
-    if not self.alarms_file.exists():
-      self.alarms_file.touch()
-
-  def parseAlarms(self):
-    with self.alarms_file.open('r') as file:
-      data = file.readlines()
-      if len(data):
-        self.alarmService.extendAlarms(
-          [Alarm(line.strip()) for line in data]
-        )
-
   def start(self):
     print(menu_messages['menu']['start'])
 
@@ -105,6 +71,64 @@ class Menu(Tools):
     if 'fn' in chosenOption and callable(chosenOption.get('fn')): 
       chosenOption['fn']()
     else: print('not ready yet')
+  
+  def createAlarm(self):
+    print(menu_messages['alarm']['start_create'])
+    self.alarmService.printAvailableAlarmTypes()
+
+    type = self.alarmService.getAlarmTypeByIndex(
+      self.requestNumberBetween(self.alarmService.alarmTypesMaxIndex)
+    )
+
+    print('Set alarm value')
+    target = self.requestNumberBetween(100)
+    self.appendAlarm(type, target)
+
+
+  def appendAlarm(self, type, target):
+    if self.alarmService.isAlarmTypeExist(type):
+      shouldAlarmBeReplaced = self.requestAnswer(
+        self.yesNoOptions,
+        menu_messages['alarm']['existed'].format(type=type)
+      )
+      if shouldAlarmBeReplaced:
+        self.alarmService.replaceAlarm(Alarm(type, target))
+    else:
+      self.alarmService.extendAlarms([Alarm(type, target)])
+
+  def editAlarm(self):
+    idx = self.requestAnswer(
+      self.alarmService.getAlarmsAsOptions(),
+      menu_messages['alarm']['edit']
+    )
+    editedAlarm = self.alarmService.getAlarmByIndex(idx)
+    print(menu_messages['alarm']['edit_type'].format(type=editedAlarm.type))
+    target = self.requestNumberBetween(100)
+    self.alarmService.replaceAlarm(
+      Alarm(editedAlarm.type, target)
+    )
+
+  def deleteAlarm(self):
+    idx = self.requestAnswer(
+      self.alarmService.getAlarmsAsOptions(),
+      menu_messages['alarm']['delete']
+    )
+    self.alarmService.deleteAlarmByIndex(idx)
+
+  def monitorSystem(self):
+    print('monitoring')
+
+  def checkAlarmsFile(self):
+    if not self.alarms_file.exists():
+      self.alarms_file.touch()
+
+  def parseAlarms(self):
+    with self.alarms_file.open('r') as file:
+      data = file.readlines()
+      if len(data):
+        self.alarmService.extendAlarms(
+          [Alarm(line.strip()) for line in data]
+        )
 
   def requestAnswer(self, options, message):
     print(message)
@@ -120,24 +144,3 @@ class Menu(Tools):
     return max(
       [int(i) for i in collection.keys()]
     )
-
-  def createAlarm(self):
-    print(menu_messages['alarm']['start_create'])
-    self.alarmService.printAvailableAlarmTypes()
-
-    type = self.alarmService.getAlarmTypeByIndex(
-      self.requestNumberBetween(self.alarmService.alarmTypesMaxIndex)
-    )
-
-    print('Set alarm value')
-    target = self.requestNumberBetween(100)
-
-    if self.alarmService.isAlarmTypeExist(type):
-      choice = self.requestAnswer(
-        self.yesNoOptions,
-        menu_messages['alarm']['existed'].format(type=type)
-      )
-      if choice:
-        self.alarmService.replaceAlarm(Alarm(type, target))
-    else:
-      self.alarmService.extendAlarms([Alarm(type, target)])
