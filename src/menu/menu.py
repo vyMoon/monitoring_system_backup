@@ -137,11 +137,9 @@ class Menu(Tools):
       return
 
   def monitorSystem(self):
-    seconds = self.getMonitoringTime()
-
     try:
       monitor = Monitor(self.alarms_file)
-      monitor.startMonitor(seconds)
+      monitor.startMonitor(self.getMonitoringTime())
     except KeyboardInterrupt:
       print(menu_messages['menu']['cancel'])
       return
