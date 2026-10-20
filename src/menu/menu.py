@@ -83,7 +83,7 @@ class Menu(Tools):
     print('Set alarm value')
     target = self.requestNumberBetween(100)
     self.appendAlarm(type, target)
-
+    self.saveAlarms()
 
   def appendAlarm(self, type, target):
     if self.alarmService.isAlarmTypeExist(type):
@@ -107,6 +107,7 @@ class Menu(Tools):
     self.alarmService.replaceAlarm(
       Alarm(editedAlarm.type, target)
     )
+    self.saveAlarms()
 
   def deleteAlarm(self):
     idx = self.requestAnswer(
@@ -114,6 +115,7 @@ class Menu(Tools):
       menu_messages['alarm']['delete']
     )
     self.alarmService.deleteAlarmByIndex(idx)
+    self.saveAlarms()
 
   def monitorSystem(self):
     print('monitoring')
@@ -129,6 +131,12 @@ class Menu(Tools):
         self.alarmService.extendAlarms(
           [Alarm(line.strip()) for line in data]
         )
+
+  def saveAlarms(self):
+    with self.alarms_file.open('w') as file:
+      file.write(
+        self.alarmService.getAlarmsSaveFormat()
+      )
 
   def requestAnswer(self, options, message):
     print(message)

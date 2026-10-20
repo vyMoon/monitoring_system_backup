@@ -60,3 +60,9 @@ class AlarmService:
 
   def getAlarmByIndex(self, idx):
     return self.alarms[idx]
+
+  def getAlarmsSaveFormat(self):
+    return ('\n'.join([str(a) for a in self.alarms])
+      if len(self.alarms)
+      else ''
+    )
