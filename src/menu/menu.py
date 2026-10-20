@@ -2,6 +2,7 @@ from pathlib import Path
 from alarm.alarm import Alarm
 from alarm.alarm_types import alarm_types
 from tools.tools import Tools
+from alarm.alarm_service import AlarmService
 
 menu_messages = {
   'menu': {
@@ -11,7 +12,7 @@ menu_messages = {
   'alarm': {
     'start_create': 'what type of alarm would you like to create',
     'existed': 'Alarm, {type} exists. Do you want to replace it?',
-    'edit': 'You are going to change alarm with type: {type}. Provide new alarm limit',
+    'edit_type': 'You are going to change alarm with type: {type}. Provide new alarm limit',
     'delete': 'Which alarm would you like to delete?',
     'edit': 'Which alarm would you like to edit?',
   }
@@ -19,7 +20,7 @@ menu_messages = {
 
 class Menu(Tools):
   alarms_file = Path.cwd() / 'alarms' / 'alarms.txt'
-  alarms = []
+  alarmService = AlarmService()
   yesNoOptions = {
     '0': {
       'text': 'No',
@@ -35,7 +36,7 @@ class Menu(Tools):
     self.options = {
         '0': {
           'text': 'Create new alarm',
-          'fn': self.createAlarms
+          'fn': self.createAlarm
         },
         '1': {
           'text': 'Change existing alarm',
@@ -56,31 +57,22 @@ class Menu(Tools):
 
   def deleteAlarm(self):
     idx = self.requestAnswer(
-      self.getAlarmsAsOptions(),
+      self.alarmService.getAlarmsAsOptions(),
       menu_messages['alarm']['delete']
     )
-
-    self.alarms.pop(idx)
+    self.alarmService.deleteAlarmByIndex(idx)
   
   def editAlarm(self):
     idx = self.requestAnswer(
-      self.getAlarmsAsOptions(),
+      self.alarmService.getAlarmsAsOptions(),
       menu_messages['alarm']['edit']
     )
-    editedAlarm = self.alarms[idx]
-    print(menu_messages['alarm']['edit'].format(type=editedAlarm.type))
+    editedAlarm = self.alarmService.getAlarmByIndex(idx)
+    print(menu_messages['alarm']['edit_type'].format(type=editedAlarm.type))
     target = self.requestNumberBetween(100)
-    self.replaceAlarm(
+    self.alarmService.replaceAlarm(
       Alarm(editedAlarm.type, target)
     )
-
-  def getAlarmsAsOptions(self):
-    options = {}
-    for i, alarm in enumerate(self.alarms):
-      options[str(i)] = {
-        'text': str(alarm)
-      }
-    return options
 
   def checkAlarmsFile(self):
     if not self.alarms_file.exists():
@@ -90,20 +82,22 @@ class Menu(Tools):
     with self.alarms_file.open('r') as file:
       data = file.readlines()
       if len(data):
-        self.alarms = [Alarm(line.strip()) for line in data]
+        self.alarmService.extendAlarms(
+          [Alarm(line.strip()) for line in data]
+        )
 
   def start(self):
     print(menu_messages['menu']['start'])
 
     while True:
-      if not len(self.alarms):
+      if not self.alarmService.alarmCount:
         print(menu_messages['menu']['no_alarms'])
-        self.createAlarms()
+        self.createAlarm()
       else:
         self.showOptions()
 
   def showOptions(self):
-    self.printAlarms()
+    self.alarmService.printAlarms()
 
     choice = self.requestAnswer(self.options, 'What is next?')
     chosenOption = self.options[str(choice)]
@@ -127,44 +121,23 @@ class Menu(Tools):
       [int(i) for i in collection.keys()]
     )
 
-  def printAlarms(self):
-    if not len(self.alarms):
-      return print('There is no alarms in the system')
-    print('\nThe list of alarms')
-    for alarm in self.alarms:
-      print(alarm)
-
-  def createAlarms(self):
+  def createAlarm(self):
     print(menu_messages['alarm']['start_create'])
-    self.printAvailableAlarmTypes()
-    type = alarm_types[
-      self.requestNumberBetween(len(alarm_types) - 1)
-    ]
+    self.alarmService.printAvailableAlarmTypes()
+
+    type = self.alarmService.getAlarmTypeByIndex(
+      self.requestNumberBetween(self.alarmService.alarmTypesMaxIndex)
+    )
 
     print('Set alarm value')
     target = self.requestNumberBetween(100)
 
-    if self.isAlarmExist(type):
+    if self.alarmService.isAlarmTypeExist(type):
       choice = self.requestAnswer(
         self.yesNoOptions,
         menu_messages['alarm']['existed'].format(type=type)
       )
       if choice:
-        self.replaceAlarm(Alarm(type, target))
+        self.alarmService.replaceAlarm(Alarm(type, target))
     else:
-      self.alarms.append(Alarm(type, target))
-
-  def replaceAlarm(self, newAlarm):
-    for i, alarm in enumerate(self.alarms):
-      if alarm.type == newAlarm.type:
-        self.alarms[i] = newAlarm
-        return
-
-  def isAlarmExist(self, alarmType):
-    for alarm in self.alarms:
-      if alarm.type == alarmType:
-        return True
-
-  def printAvailableAlarmTypes(self):
-    for i, type in enumerate(alarm_types):
-      print(f'{i} - {type}')
+      self.alarmService.extendAlarms([Alarm(type, target)])
