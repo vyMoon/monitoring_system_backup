@@ -4,9 +4,8 @@ from alarm.alarm import Alarm
 from datetime import datetime, timedelta
 
 class Monitor:
-  def __init__(self, alarm_path, monitor_time = 10, monitor_interval = 1):
+  def __init__(self, alarm_path, monitor_interval = 1):
     self.alarm_path = alarm_path
-    self.monitor_time = monitor_time
     self.monitor_interval = monitor_interval
     self.getAlarms()
     self.getStateFn = {
@@ -20,11 +19,12 @@ class Monitor:
       data = file.readlines()
       self.alarms = tuple(Alarm(line.strip()) for line in data)
 
-  def startMonitor(self, seconds=10):
-    now = datetime.now()
-    end = now + timedelta(seconds=seconds)
+  def startMonitor(self, seconds = None):
+    if seconds:
+      now = datetime.now()
+      end = now + timedelta(seconds=seconds)
 
-    while now <= end:
+    while now <= end if seconds else True:
       state = self.getSystemState()
       for key in state.keys():
         print(f'{key} - current: {state[key]['current']}, limit: {state[key]['limit']}')
@@ -50,7 +50,6 @@ class Monitor:
 
 
 # m = Monitor(
-#   (Path.cwd() / 'alarms' / 'alarms.txt' ),
-#   10
+#   (Path.cwd() / 'alarms' / 'alarms.txt' )
 # )
 # m.startMonitor()

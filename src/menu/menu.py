@@ -3,11 +3,15 @@ from alarm.alarm import Alarm
 from alarm.alarm_types import alarm_types
 from tools.tools import Tools
 from alarm.alarm_service import AlarmService
+from monitor.monitor import Monitor
 
 menu_messages = {
   'menu': {
     'start': 'Welcome to our smal monitoring system',
-    'no_alarms': 'To start to work with the monitoring you need to create alarms'
+    'finish': 'The program is finished. See you later.',
+    'no_alarms': 'To start to work with the monitoring you need to create alarms',
+    'cancel': 'Operation is interrupted',
+    'cancel_message': 'Use ctrl + c to interrupt current operation'
   },
   'alarm': {
     'start_create': 'what type of alarm would you like to create',
@@ -54,13 +58,17 @@ class Menu(Tools):
 
   def start(self):
     print(menu_messages['menu']['start'])
+    print(menu_messages['menu']['cancel_message'])
 
-    while True:
-      if not self.alarmService.alarmCount:
-        print(menu_messages['menu']['no_alarms'])
-        self.createAlarm()
-      else:
-        self.showOptions()
+    try:
+      while True:
+        if not self.alarmService.alarmCount:
+          print(menu_messages['menu']['no_alarms'])
+          self.createAlarm()
+        else:
+          self.showOptions()
+    except KeyboardInterrupt:
+      print(menu_messages['menu']['finish'])
 
   def showOptions(self):
     self.alarmService.printAlarms()
@@ -73,17 +81,20 @@ class Menu(Tools):
     else: print('not ready yet')
   
   def createAlarm(self):
-    print(menu_messages['alarm']['start_create'])
-    self.alarmService.printAvailableAlarmTypes()
+    try:
+      print(menu_messages['alarm']['start_create'])
+      self.alarmService.printAvailableAlarmTypes()
 
-    type = self.alarmService.getAlarmTypeByIndex(
-      self.requestNumberBetween(self.alarmService.alarmTypesMaxIndex)
-    )
+      type = self.alarmService.getAlarmTypeByIndex(
+        self.requestNumberBetween(self.alarmService.alarmTypesMaxIndex)
+      )
 
-    print('Set alarm value')
-    target = self.requestNumberBetween(100)
-    self.appendAlarm(type, target)
-    self.saveAlarms()
+      print('Set alarm value')
+      target = self.requestNumberBetween(100)
+      self.appendAlarm(type, target)
+      self.saveAlarms()
+    except KeyboardInterrupt:
+      print(menu_messages['menu']['cancel'])
 
   def appendAlarm(self, type, target):
     if self.alarmService.isAlarmTypeExist(type):
@@ -97,28 +108,50 @@ class Menu(Tools):
       self.alarmService.extendAlarms([Alarm(type, target)])
 
   def editAlarm(self):
-    idx = self.requestAnswer(
-      self.alarmService.getAlarmsAsOptions(),
-      menu_messages['alarm']['edit']
-    )
-    editedAlarm = self.alarmService.getAlarmByIndex(idx)
-    print(menu_messages['alarm']['edit_type'].format(type=editedAlarm.type))
-    target = self.requestNumberBetween(100)
-    self.alarmService.replaceAlarm(
-      Alarm(editedAlarm.type, target)
-    )
-    self.saveAlarms()
+    try:
+      idx = self.requestAnswer(
+        self.alarmService.getAlarmsAsOptions(),
+        menu_messages['alarm']['edit']
+      )
+      editedAlarm = self.alarmService.getAlarmByIndex(idx)
+      print(menu_messages['alarm']['edit_type'].format(type=editedAlarm.type))
+      target = self.requestNumberBetween(100)
+      self.alarmService.replaceAlarm(
+        Alarm(editedAlarm.type, target)
+      )
+      self.saveAlarms()
+    except KeyboardInterrupt:
+      print(menu_messages['menu']['cancel'])
+      return
 
   def deleteAlarm(self):
-    idx = self.requestAnswer(
-      self.alarmService.getAlarmsAsOptions(),
-      menu_messages['alarm']['delete']
-    )
-    self.alarmService.deleteAlarmByIndex(idx)
-    self.saveAlarms()
+    try:
+      idx = self.requestAnswer(
+        self.alarmService.getAlarmsAsOptions(),
+        menu_messages['alarm']['delete']
+      )
+      self.alarmService.deleteAlarmByIndex(idx)
+      self.saveAlarms()
+    except KeyboardInterrupt:
+      print(menu_messages['menu']['cancel'])
+      return
 
   def monitorSystem(self):
-    print('monitoring')
+    seconds = self.getMonitoringTime()
+
+    try:
+      monitor = Monitor(self.alarms_file)
+      monitor.startMonitor(seconds)
+    except KeyboardInterrupt:
+      print(menu_messages['menu']['cancel'])
+      return
+
+  def getMonitoringTime(self):
+    yes = self.requestAnswer(
+      self.yesNoOptions,
+      'Do you want to provide monitoring time? Otherwise it has no time limit.'
+    )
+    return self.requestNumber() if yes else None
 
   def checkAlarmsFile(self):
     if not self.alarms_file.exists():
