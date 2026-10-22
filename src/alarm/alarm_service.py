@@ -32,6 +32,13 @@ class AlarmService:
     for alarm in self.alarms:
       if alarm.type == alarmType:
         return True
+    return False
+
+  def saveAlarmFromConsole(self, type, target):
+    alarm = Alarm(type, target)
+    if self.isAlarmTypeExist(type):
+      self.replaceAlarm(alarm)
+    else: self.extendAlarms([alarm])
 
   def replaceAlarm(self, newAlarm):
     for i, alarm in enumerate(self.alarms):
@@ -42,6 +49,17 @@ class AlarmService:
   def deleteAlarmByIndex(self, idx):
     self.alarms.pop(idx)
 
+  def deleteAlarmByType(self, alarmType):
+    idx = self.getAlarmIndexByType(alarmType)
+
+    if idx != False: self.deleteAlarmByIndex(idx)
+
+  def getAlarmIndexByType(self, alarmType):
+    for i, a in enumerate(self.alarms):
+      if a.type == alarmType:
+        return i
+    return False
+  
   def getAlarmsAsOptions(self):
     options = {}
     for i, alarm in enumerate(self.alarms):

@@ -61,7 +61,29 @@ class Menu(Tools):
       }
     }
 
-  def start(self):
+  def start(self, commands = None):
+    if len(commands):
+      self.startWithCommands(commands)
+    else: self.startWithDialogs()
+
+  def startWithCommands(self, commands):
+    for c in commands:
+      print(c[0])
+      command = c[0].lower()
+      if command == 'list':
+        self.alarmService.printAlarms()
+      elif command == 'alarm':
+        alarmType = c[1]
+        target = c[2]
+        self.alarmService.saveAlarmFromConsole(alarmType, target)
+        self.saveAlarms()
+      elif command == 'delete':
+        self.alarmService.deleteAlarmByType(c[1])
+        self.saveAlarms()
+      elif command == 'monitor' and c[1]:
+        self.monitorSystem(c[1])
+  
+  def startWithDialogs(self):
     print(menu_messages['menu']['start'])
     print(menu_messages['menu']['cancel_message'])
     self.logger.log('Session stared')
@@ -78,7 +100,7 @@ class Menu(Tools):
       print(menu_messages['menu']['finish'])
     except Exception as e:
       self.logger.logPrefix('Error', f'{type(e).__name__}: {e}')
-
+  
   def showOptions(self):
     self.alarmService.printAlarms()
     self.logger.logPrefix('Alarms', self.alarmService.getAlarmsSaveFormat())
@@ -161,11 +183,11 @@ class Menu(Tools):
       print(menu_messages['menu']['cancel'])
       return
 
-  def monitorSystem(self):
+  def monitorSystem(self, monitorTime = None):
     self.logger.logPrefix('Monitoring', 'started')
     try:
       monitor = Monitor(self.alarms_file, self.logger)
-      monitor.startMonitor(self.getMonitoringTime())
+      monitor.startMonitor(monitorTime or self.getMonitoringTime())
     except KeyboardInterrupt:
       print(menu_messages['menu']['cancel'])
       return
