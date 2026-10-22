@@ -4,6 +4,7 @@ from alarm.alarm_types import alarm_types
 from tools.tools import Tools
 from alarm.alarm_service import AlarmService
 from monitor.monitor import Monitor
+from logger.logger import Logger
 
 menu_messages = {
   'menu': {
@@ -23,40 +24,42 @@ menu_messages = {
   }
 }
 
+yesNoOptions = {
+  '0': {
+    'text': 'No',
+  },
+  '1': {
+    'text': 'Yes',
+  },
+}
+
 class Menu(Tools):
   alarms_file = Path.cwd() / 'alarms' / 'alarms.txt'
   logsPath = Path.cwd()
   alarmService = AlarmService()
-  yesNoOptions = {
-    '0': {
-      'text': 'No',
-    },
-    '1': {
-      'text': 'Yes',
-    },
-  }
 
   def __init__(self):
     self.checkAlarmsFile()
     self.parseAlarms()
+    self.logger = Logger(self.logsPath)
     self.options = {
-        '0': {
-          'text': 'Create new alarm',
-          'fn': self.createAlarm
-        },
-        '1': {
-          'text': 'Change existing alarm',
-          'fn': self.editAlarm
-        },
-        '2': {
-          'text': 'Delete alarm',
-          'fn': self.deleteAlarm
-        },
-        '3': {
-          'text': 'Start monitoring',
-          'fn': self.monitorSystem
-        }
+      '0': {
+        'text': 'Create new alarm',
+        'fn': self.createAlarm
+      },
+      '1': {
+        'text': 'Change existing alarm',
+        'fn': self.editAlarm
+      },
+      '2': {
+        'text': 'Delete alarm',
+        'fn': self.deleteAlarm
+      },
+      '3': {
+        'text': 'Start monitoring',
+        'fn': self.monitorSystem
       }
+    }
 
   def start(self):
     print(menu_messages['menu']['start'])
@@ -101,7 +104,7 @@ class Menu(Tools):
   def appendAlarm(self, type, target):
     if self.alarmService.isAlarmTypeExist(type):
       shouldAlarmBeReplaced = self.requestAnswer(
-        self.yesNoOptions,
+        yesNoOptions,
         menu_messages['alarm']['existed'].format(type=type)
       )
       if shouldAlarmBeReplaced:
@@ -140,7 +143,7 @@ class Menu(Tools):
 
   def monitorSystem(self):
     try:
-      monitor = Monitor(self.alarms_file, self.logsPath)
+      monitor = Monitor(self.alarms_file, self.logger)
       monitor.startMonitor(self.getMonitoringTime())
     except KeyboardInterrupt:
       print(menu_messages['menu']['cancel'])
@@ -148,9 +151,10 @@ class Menu(Tools):
 
   def getMonitoringTime(self):
     yes = self.requestAnswer(
-      self.yesNoOptions,
+      yesNoOptions,
       menu_messages['menu']['monitor_time']
     )
+    print('Provide monitoring time in seconds')
     return self.requestNumber() if yes else None
 
   def checkAlarmsFile(self):
