@@ -11,7 +11,8 @@ menu_messages = {
     'finish': 'The program is finished. See you later.',
     'no_alarms': 'To start to work with the monitoring you need to create alarms',
     'cancel': 'Operation is interrupted',
-    'cancel_message': 'Use ctrl + c to interrupt current operation'
+    'cancel_message': 'Use ctrl + c to interrupt current operation',
+    'monitor_time': 'Do you want to provide monitoring time? Otherwise it has no time limit.',
   },
   'alarm': {
     'start_create': 'what type of alarm would you like to create',
@@ -24,6 +25,7 @@ menu_messages = {
 
 class Menu(Tools):
   alarms_file = Path.cwd() / 'alarms' / 'alarms.txt'
+  logsPath = Path.cwd()
   alarmService = AlarmService()
   yesNoOptions = {
     '0': {
@@ -138,7 +140,7 @@ class Menu(Tools):
 
   def monitorSystem(self):
     try:
-      monitor = Monitor(self.alarms_file)
+      monitor = Monitor(self.alarms_file, self.logsPath)
       monitor.startMonitor(self.getMonitoringTime())
     except KeyboardInterrupt:
       print(menu_messages['menu']['cancel'])
@@ -147,7 +149,7 @@ class Menu(Tools):
   def getMonitoringTime(self):
     yes = self.requestAnswer(
       self.yesNoOptions,
-      'Do you want to provide monitoring time? Otherwise it has no time limit.'
+      menu_messages['menu']['monitor_time']
     )
     return self.requestNumber() if yes else None
 
